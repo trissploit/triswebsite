@@ -179,6 +179,9 @@
 
         /* Mobile adjustments */
         @media (max-width: 700px) {
+            /* allow normal scrolling and flow on small screens */
+            body { overflow: auto; height: auto; }
+            .section { position: relative; inset: auto; height: auto; padding: 28px 16px calc(28px + var(--footer-height)); }
             h1 { font-size: 2rem; margin-bottom: 24px; }
             .image-container { height: 40vh; border-radius: 8px; }
             .content-header { font-size: 1.4rem; }
@@ -289,7 +292,6 @@
         (function() {
             const clips = [
                 'https://cdn.discordapp.com/attachments/1456055978029092884/1461075516718059703/trim.A9960BD1-36B6-4940-AF15-FC68B5FCC56F.mov?ex=69693c1c&is=6967ea9c&hm=d91a84bd4441545b9a9030faa2caaddeff09b6d14d6b3008e007e875f38cac67&',
-                'https://cdn.discordapp.com/attachments/1456055978029092884/1461075514914508934/EMPATHCHAN_THE_RUTHLESS_DICTATOR_-_YO_YO_NIGGAS_IN_5_HOURS_EBT_ENDS_wukQCa.mov?ex=69693c1c&is=6967ea9c&hm=53dd4c4fed8f7ead335f1fd68f643dbfcd4762e554572cb4ba143d59ebbe5ef2&'
             ];
 
             const video = document.getElementById('bg-video');
@@ -327,13 +329,8 @@
                     // attempt to play muted (browsers allow muted autoplay)
                     video.play().catch(() => {});
 
-                    // compute wall-time max: do not play for more than 6000ms
-                    // also do not exceed remaining duration (if known) divided by playbackRate
-                    const remainingSec = isFinite(video.duration) ? Math.max(0, video.duration - video.currentTime) : 0;
-                    const remainingWallMs = remainingSec > 0 ? (remainingSec / video.playbackRate) * 1000 : 6000;
-                    // choose random play time between 800ms and min(6000, remainingWallMs)
-                    const maxPlay = Math.min(6000, Math.max(800, remainingWallMs));
-                    const playMs = Math.max(500, Math.random() * (maxPlay - 500) + 500);
+                    // Force play for full 6000ms (wall time) if possible
+                    const playMs = 6000;
 
                     playTimeout = setTimeout(() => {
                         try { video.pause(); } catch (e) {}
@@ -355,6 +352,12 @@
                 video.addEventListener('loadedmetadata', handleMeta, { once: true });
                 video.addEventListener('seeked', handleSeeked, { once: true });
                 video.addEventListener('error', handleError, { once: true });
+                // If the clip ends before our 6s window, immediately schedule next
+                video.addEventListener('ended', function onend() {
+                    clearTimers();
+                    nextTimeout = setTimeout(playRandomSnippet, 200 + Math.random() * 800);
+                    video.removeEventListener('ended', onend);
+                });
             }
 
             // Start muted autoplay; browsers typically allow muted playback
@@ -402,19 +405,22 @@
                 }
             }
 
-            window.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                go(e.deltaY);
-            }, { passive: false });
+            // Only enable wheel/keyboard swapping on larger screens (desktop behavior)
+            if (window.innerWidth > 700) {
+                window.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    go(e.deltaY);
+                }, { passive: false });
 
-            // Touch support (swipe)
-            let ts = 0;
-            window.addEventListener('touchstart', (e) => { ts = e.touches[0].clientY; }, { passive: true });
-            window.addEventListener('touchend', (e) => {
-                const te = e.changedTouches[0].clientY;
-                const diff = ts - te;
-                if (Math.abs(diff) > 40) go(diff);
-            }, { passive: true });
+                // Touch support for swipe (on tablets/large screens)
+                let ts = 0;
+                window.addEventListener('touchstart', (e) => { ts = e.touches[0].clientY; }, { passive: true });
+                window.addEventListener('touchend', (e) => {
+                    const te = e.changedTouches[0].clientY;
+                    const diff = ts - te;
+                    if (Math.abs(diff) > 40) go(diff);
+                }, { passive: true });
+            }
 
             // Keyboard arrows
             window.addEventListener('keydown', (e) => {
