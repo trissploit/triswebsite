@@ -59,7 +59,7 @@
         .main-button {
             padding: 15px 45px;
             font-size: 1.1rem;
-            border: none;
+            border: 1px solid #7600f4;
             cursor: pointer;
             background: #7600f4;
             color: white;
@@ -76,10 +76,10 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(255,255,255,0.03);
+            background: #111111;
             padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 0;
+            border: 1px solid #7600f4;
         }
 
         .code-holder pre {
@@ -93,10 +93,10 @@
 
         .copy-btn {
             padding: 8px 14px;
-            background: #27272a;
+            background: #7600f4;
             color: #fff;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 6px;
+            border: 1px solid #7600f4;
+            border-radius: 0;
             cursor: pointer;
             transition: background 0.15s ease;
         }
@@ -120,7 +120,7 @@
             justify-content: center;
             padding: 18px 20px;
             box-sizing: border-box;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top: 1px solid #7600f4;
             background: rgba(0,0,0,0.0);
             z-index: 1000;
             height: var(--footer-height);
@@ -177,7 +177,8 @@
             background-image: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FUIwQdCyvfNI%2Fmaxresdefault.jpg&f=1&nofb=1&ipt=31de7e471224f14a762b3b79c14da9d90b0005b161cc25f7ecb1e23e9d26bc28');
             background-size: cover;
             background-position: center;
-            border-radius: 12px;
+            border-radius: 0;
+            border: 1px solid #7600f4;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             margin-bottom: 28px;
         }
@@ -228,7 +229,7 @@
                 justify-content: center;
             }
             h1 { font-size: 1.6rem; margin-bottom: 18px; letter-spacing: 1px; }
-            .image-container { height: 30vh; width: 92%; border-radius: 8px; }
+            .image-container { height: 30vh; width: 92%; border-radius: 0; }
             .content-header { font-size: 1.2rem; }
             .content-subtext { font-size: 0.9rem; padding: 0 10px; }
             .main-button { padding: 10px 22px; font-size: 1rem; }
@@ -276,7 +277,7 @@
     <!-- Background video element (muted, plays short random snippets) -->
     <video id="bg-video" muted playsinline preload="auto" aria-hidden="true"></video>
     <!-- Background audio (MP3) -->
-    <audio id="bg-audio" src="https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/So%20Damn%20Fucked%20Up.mp3" loop preload="auto"></audio>
+    <audio id="bg-audio" preload="auto"></audio>
 
     <script>
         const text = "tris.rocks";
@@ -340,19 +341,57 @@
             setTimeout(() => { btn.innerText = orig; }, 1400);
         }
 
-        // Background audio using HTML5 <audio>
+        // Background audio shuffling multiple MP3s
         (function() {
+            const songs = [
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461120632208101440/So_Damn_Fucked_Up.mp3?ex=69696621&is=696814a1&hm=82d1013026183a22a29d8872ee8c7049e2d218dea6ecc2b7db9193cfe37332e4&',
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461123077663621312/Hate_Bein_Sober.mp3?ex=69696868&is=696816e8&hm=c2835ede9247d4d5d9cdc88b635016a44380e51cd88152db2ab2e9be1ac24dff&',
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461123785309819004/Lean_Chronicles_feat._Leewayy.mp3?ex=69696910&is=69681790&hm=3b6ace8dab77ed769151d5fe8a0dbec3e281ab1e06ba57d126fd20e247333341&'
+            ];
+
             const audio = document.getElementById('bg-audio');
             if (!audio) return;
             audio.volume = 0.5;
 
-            // Try to autoplay; many browsers block autoplay with sound, so fallback to muted autoplay
-            audio.play().catch(() => {
-                audio.muted = true;
-                audio.play().catch(() => {});
-            });
+            let queue = [];
+            let lastPlayed = null;
 
-            // On first user interaction, unmute and play (to satisfy autoplay policies)
+            function shuffle(a) {
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            function refillQueue() {
+                queue = shuffle(songs.slice());
+                // avoid immediate repeat
+                if (lastPlayed && queue.length > 1 && queue[0] === lastPlayed) {
+                    queue.push(queue.shift());
+                }
+            }
+
+            function playNextSong() {
+                if (queue.length === 0) refillQueue();
+                const src = queue.shift();
+                lastPlayed = src;
+                audio.src = src;
+                audio.load();
+                audio.play().catch(() => {
+                    // fallback to muted
+                    audio.muted = true;
+                    audio.play().catch(() => {});
+                });
+            }
+
+            // Play next song when current ends
+            audio.addEventListener('ended', playNextSong);
+
+            // Start with first song
+            playNextSong();
+
+            // On first user interaction, unmute and play
             function unlockAudio() {
                 try {
                     audio.muted = false;
