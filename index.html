@@ -426,16 +426,16 @@
                     e.preventDefault();
                     go(e.deltaY);
                 }, { passive: false });
-
-                // Touch support for swipe (on tablets/large screens)
-                let ts = 0;
-                window.addEventListener('touchstart', (e) => { ts = e.touches[0].clientY; }, { passive: true });
-                window.addEventListener('touchend', (e) => {
-                    const te = e.changedTouches[0].clientY;
-                    const diff = ts - te;
-                    if (Math.abs(diff) > 40) go(diff);
-                }, { passive: true });
             }
+
+            // Touch support for swipe (enable on mobile and touch devices)
+            let ts = 0;
+            window.addEventListener('touchstart', (e) => { ts = e.touches[0].clientY; }, { passive: true });
+            window.addEventListener('touchend', (e) => {
+                const te = e.changedTouches[0].clientY;
+                const diff = ts - te;
+                if (Math.abs(diff) > 40) go(diff);
+            }, { passive: true });
 
             // Keyboard arrows
             window.addEventListener('keydown', (e) => {
