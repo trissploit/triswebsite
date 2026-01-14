@@ -237,7 +237,6 @@
             /* Make sure background video stays behind content on mobile */
             #bg-video { opacity: 0.45; }
         }
-
     </style>
 </head>
 <body>
@@ -251,7 +250,7 @@
 
         <!-- CODE HOLDER (copyable) -->
         <div class="code-holder">
-            <pre><code id="code-text">loadstring(game:HttpGet("https://tris.rocks/script.lua"))();</code></pre>
+            <pre><code id="code-text">loadstring(game:HttpGet("pornhub.com"))();</code></pre>
             <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
         </div>
 
@@ -280,27 +279,6 @@
     <audio id="bg-audio" src="https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/So%20Damn%20Fucked%20Up.mp3" loop preload="auto"></audio>
 
     <script>
-        // Detect if running inside a Lua VM / executor environment and redirect if detected
-        function detectLuaVM() {
-            try {
-                const checks = ['getgenv'];
-                for (const k of checks) {
-                    if (typeof window[k] !== 'undefined') return true;
-                }
-                if (typeof getgenv !== 'undefined') return true;
-                const ua = navigator.userAgent || '';
-                if (/lua|luavm|luau|roblox/i.test(ua)) return true;
-            } catch (e) {}
-            return false;
-        }
-
-        (function checkVM() {
-            const isLua = detectLuaVM();
-            if (isLua) {
-                window.location.href = 'vm.html';
-            }
-        })();
-
         const text = "tris.rocks";
         const speed = 120;
 
