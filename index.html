@@ -160,7 +160,11 @@
             opacity: 0.5;
             pointer-events: none;
             z-index: 0;
-            transform: translateZ(0);
+            /* Avoid transforms on the video element (can interfere with touch/scroll on mobile) */
+            transform: none;
+            -webkit-transform: none;
+            /* Allow vertical pan gestures to pass through */
+            touch-action: pan-y;
         }
 
         .content-header {
@@ -179,15 +183,17 @@
 
         /* Mobile adjustments */
         @media (max-width: 700px) {
-            /* On small screens allow normal scrolling and make sections flow */
-            body { overflow: auto; height: auto; touch-action: pan-y; }
+            /* On small screens keep everything centered, smaller, and disable scroll */
+            body { overflow: hidden; height: 100vh; }
             .section {
-                position: relative;
-                inset: auto;
-                height: auto;
+                position: fixed;
+                inset: 0;
+                height: 100vh;
                 padding: 20px 12px calc(20px + var(--footer-height));
-                display: block;
-                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
             }
             h1 { font-size: 1.6rem; margin-bottom: 18px; letter-spacing: 1px; }
             .image-container { height: 30vh; width: 92%; border-radius: 8px; }
@@ -197,7 +203,7 @@
             .fixed-footer { padding: 10px 12px; --footer-height: 60px; }
             :root { --footer-height: 60px; }
             /* Make sure background video stays behind content on mobile */
-            #bg-video { opacity: 0.45; pointer-events: none; }
+            #bg-video { opacity: 0.45; }
         }
     </style>
 </head>
