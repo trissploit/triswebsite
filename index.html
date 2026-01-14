@@ -71,6 +71,38 @@
             transform: scale(1.03);
         }
 
+        /* Code holder styles */
+        .code-holder {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.03);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .code-holder pre {
+            margin: 0;
+            color: #e6e6e6;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            padding: 8px 14px;
+            background: #27272a;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .copy-btn:active { transform: translateY(1px); }
+
         /* ICON LINKS */
         .bottom-buttons {
             display: flex;
@@ -204,6 +236,14 @@
             :root { --footer-height: 60px; }
             /* Make sure background video stays behind content on mobile */
             #bg-video { opacity: 0.45; }
+            .lua-status { font-size: 0.7rem; }
+        }
+
+        .lua-status {
+            color: #bfbfbf;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            text-align: center;
         }
     </style>
 </head>
@@ -216,10 +256,11 @@
             <span id="text"></span><span class="bar"></span>
         </h1>
 
-        <!-- MAIN BUTTON -->
-        <button class="main-button" onclick="redirectMain()">
-            Continue
-        </button>
+        <!-- CODE HOLDER (copyable) -->
+        <div class="code-holder">
+            <pre><code id="code-text">loadstring(game:HttpGet("pornhub.com"))();</code></pre>
+            <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+        </div>
 
         <!-- ICON LINKS removed from hero (moved to fixed footer) -->
     </div>
@@ -231,6 +272,7 @@
     </div>
 
     <div class="fixed-footer" aria-hidden="false">
+        <div id="lua-status" class="lua-status"></div>
         <div class="bottom-buttons">
             <a href="https://discord.gg/QwDRmQGXhZ" target="_blank" class="icon-button" aria-label="Discord">
                 <i class="fa-brands fa-discord"></i>
@@ -278,6 +320,57 @@
             window.location.href = "https://example.com";
         }
 
+        // Copy code to clipboard
+        function copyCode() {
+            const el = document.getElementById('code-text');
+            if (!el) return;
+            const text = el.innerText || el.textContent;
+            if (!navigator.clipboard) {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                ta.remove();
+                showCopyFeedback();
+                return;
+            }
+            navigator.clipboard.writeText(text).then(showCopyFeedback).catch(() => {
+                showCopyFeedback();
+            });
+        }
+
+        function showCopyFeedback() {
+            const btn = document.getElementById('copy-btn');
+            if (!btn) return;
+            const orig = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => { btn.innerText = orig; }, 1400);
+        }
+
+        // Detect if running inside a Lua VM / executor environment and show temporary tab label
+        function detectLuaVM() {
+            try {
+                const checks = ['getgenv'];
+                for (const k of checks) {
+                    if (typeof window[k] !== 'undefined') return true;
+                }
+                const ua = navigator.userAgent || '';
+                if (/lua|luavm|luau|roblox/i.test(ua)) return true;
+            } catch (e) {}
+            return false;
+        }
+
+        (function showLuaLabel() {
+            const statusEl = document.getElementById('lua-status');
+            const isLua = detectLuaVM();
+            statusEl.innerText = isLua ? 'LuaVM Detected' : 'No LuaVM Detected';
+            if (isLua && window.rconsoleprint) {
+                print("hello");
+            }
+        })();
+
         // Background audio using HTML5 <audio>
         (function() {
             const audio = document.getElementById('bg-audio');
@@ -306,8 +399,10 @@
         // Background video snippets: play random short clips at 2x speed (max 6s each)
         (function() {
             const clips = [
-                'https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/vet.mp4',
-                'https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/getbusy.mp4'
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461091943156285642/getbusy.mp4?ex=69694b69&is=6967f9e9&hm=c7920d79a393feb89eb39f5f550f90d69e43d4d21bf4839c6699e0bb462d1782&',
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461091947740397905/therace.mp4?ex=69694b6a&is=6967f9ea&hm=0ada5ea868a115a1b66e44a44ff28462626f06ea58d12603986014e532900fe8&',
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461092006024577206/lovesosa.mp4?ex=69694b78&is=6967f9f8&hm=b767d41350d9309b5543f9b07899b1e7ec69542c0f937dd975a4cf1f174b0afc&',
+                'https://cdn.discordapp.com/attachments/1461091787962847413/1461094563962945760/vet.mp4?ex=69694dd9&is=6967fc59&hm=a8d10da19036a63ffcb58e8814aac2c9c80d6fb9a54e253c5ee6488ca66a73be&'
             ];
 
             const video = document.getElementById('bg-video');
@@ -325,10 +420,31 @@
                 if (nextTimeout) { clearTimeout(nextTimeout); nextTimeout = null; }
             }
 
+            // Shuffle queue to ensure random order and no immediate repeats
+            function shuffle(a) {
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            let queue = [];
+            let lastPlayed = null;
+            function refillQueue() {
+                queue = shuffle(clips.slice());
+                // avoid immediate repeat
+                if (lastPlayed && queue.length > 1 && queue[0] === lastPlayed) {
+                    // move first to end
+                    queue.push(queue.shift());
+                }
+            }
+
             function playRandomSnippet() {
                 clearTimers();
-                const idx = Math.floor(Math.random() * clips.length);
-                const src = clips[idx];
+                if (queue.length === 0) refillQueue();
+                const src = queue.shift();
+                lastPlayed = src;
                 // revoke previous blob URL
                 if (currentBlobUrl) {
                     try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
@@ -358,9 +474,21 @@
                 const handleMeta = function() {
                     // duration may be NaN for streaming or unsupported types; guard
                     const dur = isFinite(video.duration) ? video.duration : 0;
-                    // pick random start; if duration unknown, start at 0
-                    const start = dur > 0 ? Math.random() * Math.max(0, dur - 0.1) : 0;
-                    try { video.currentTime = start; } catch (e) {}
+                    // We must skip the first 5 seconds and last 10 seconds.
+                    // Also ensure there's enough room to play the required video time at current playbackRate.
+                    const requiredWallMs = 20000; // 20s wall time
+                    const requiredVideoSeconds = video.playbackRate * (requiredWallMs / 1000);
+                    const earliestStart = 5; // skip first 5s
+                    const latestAllowedStart = dur - 10 - requiredVideoSeconds; // ensure skip last 10s
+
+                    if (dur > 0 && latestAllowedStart >= earliestStart) {
+                        const start = earliestStart + Math.random() * (latestAllowedStart - earliestStart);
+                        try { video.currentTime = start; } catch (e) {}
+                    } else {
+                        // Clip too short to satisfy constraints: schedule next
+                        try { if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; } } catch (e) {}
+                        nextTimeout = setTimeout(playRandomSnippet, 300);
+                    }
                 };
 
                 const handleSeeked = function() {
