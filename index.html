@@ -179,16 +179,27 @@
 
         /* Mobile adjustments */
         @media (max-width: 700px) {
-            /* allow normal scrolling and flow on small screens */
-            body { overflow: auto; height: auto; }
-            .section { position: relative; inset: auto; height: auto; padding: 28px 16px calc(28px + var(--footer-height)); }
-            h1 { font-size: 2rem; margin-bottom: 24px; }
-            .image-container { height: 40vh; border-radius: 8px; }
-            .content-header { font-size: 1.4rem; }
-            .content-subtext { font-size: 0.95rem; padding: 0 12px; }
-            .main-button { padding: 12px 28px; }
-            .fixed-footer { padding: 12px 14px; --footer-height: 64px; }
-            :root { --footer-height: 64px; }
+            /* On small screens keep everything centered, smaller, and disable scroll */
+            body { overflow: hidden; height: 100vh; }
+            .section {
+                position: fixed;
+                inset: 0;
+                height: 100vh;
+                padding: 20px 12px calc(20px + var(--footer-height));
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            h1 { font-size: 1.6rem; margin-bottom: 18px; letter-spacing: 1px; }
+            .image-container { height: 30vh; width: 92%; border-radius: 8px; }
+            .content-header { font-size: 1.2rem; }
+            .content-subtext { font-size: 0.9rem; padding: 0 10px; }
+            .main-button { padding: 10px 22px; font-size: 1rem; }
+            .fixed-footer { padding: 10px 12px; --footer-height: 60px; }
+            :root { --footer-height: 60px; }
+            /* Make sure background video stays behind content on mobile */
+            #bg-video { opacity: 0.45; }
         }
     </style>
 </head>
