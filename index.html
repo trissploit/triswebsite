@@ -306,7 +306,8 @@
         // Background video snippets: play random short clips at 2x speed (max 6s each)
         (function() {
             const clips = [
-                'https://cdn.discordapp.com/attachments/1456055978029092884/1461075516718059703/trim.A9960BD1-36B6-4940-AF15-FC68B5FCC56F.mov?ex=69693c1c&is=6967ea9c&hm=d91a84bd4441545b9a9030faa2caaddeff09b6d14d6b3008e007e875f38cac67&',
+                'https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/vet.mp4',
+                'https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/getbusy.mp4'
             ];
 
             const video = document.getElementById('bg-video');
@@ -367,8 +368,8 @@
                     // attempt to play muted (browsers allow muted autoplay)
                     video.play().catch(() => {});
 
-                    // Force play for full 6000ms (wall time) if possible
-                    const playMs = 6000;
+                    // Force play for full 20000ms (wall time)
+                    const playMs = 20000;
 
                     playTimeout = setTimeout(() => {
                         try { video.pause(); } catch (e) {}
