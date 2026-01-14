@@ -9,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <style>
+        :root { --footer-height: 72px; }
         body {
             margin: 0;
             height: 100vh;
@@ -90,6 +91,9 @@
             border-top: 1px solid rgba(255,255,255,0.06);
             background: rgba(0,0,0,0.0);
             z-index: 1000;
+            height: var(--footer-height);
+            align-items: center;
+            backdrop-filter: blur(4px);
         }
 
         .icon-button {
@@ -115,7 +119,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 40px 20px calc(40px + var(--footer-height));
             box-sizing: border-box;
             opacity: 0;
             transform: translateY(20px);
@@ -146,6 +150,19 @@
             margin-bottom: 28px;
         }
 
+        /* Background video */
+        #bg-video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+            transform: translateZ(0);
+        }
+
         .content-header {
             color: white;
             font-size: 2.2rem;
@@ -158,6 +175,17 @@
             text-align: center;
             line-height: 1.6;
             font-size: 1.05rem;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 700px) {
+            h1 { font-size: 2rem; margin-bottom: 24px; }
+            .image-container { height: 40vh; border-radius: 8px; }
+            .content-header { font-size: 1.4rem; }
+            .content-subtext { font-size: 0.95rem; padding: 0 12px; }
+            .main-button { padding: 12px 28px; }
+            .fixed-footer { padding: 12px 14px; --footer-height: 64px; }
+            :root { --footer-height: 64px; }
         }
     </style>
 </head>
@@ -194,6 +222,10 @@
             </a>
         </div>
     </div>
+    <!-- Background video element (muted, plays short random snippets) -->
+    <video id="bg-video" muted playsinline preload="auto" aria-hidden="true"></video>
+    <!-- Background audio (MP3) -->
+    <audio id="bg-audio" src="https://github.com/trissploit/trisrocks.github.io/raw/refs/heads/main/So%20Damn%20Fucked%20Up.mp3" loop preload="auto"></audio>
 
     <script>
         const text = "tris.rocks";
@@ -227,6 +259,116 @@
         function redirectMain() {
             window.location.href = "https://example.com";
         }
+
+        // Background audio using HTML5 <audio>
+        (function() {
+            const audio = document.getElementById('bg-audio');
+            if (!audio) return;
+            audio.volume = 0.5;
+
+            // Try to autoplay; many browsers block autoplay with sound, so fallback to muted autoplay
+            audio.play().catch(() => {
+                audio.muted = true;
+                audio.play().catch(() => {});
+            });
+
+            // On first user interaction, unmute and play (to satisfy autoplay policies)
+            function unlockAudio() {
+                try {
+                    audio.muted = false;
+                    audio.play();
+                } catch (e) {}
+                window.removeEventListener('click', unlockAudio);
+                window.removeEventListener('touchstart', unlockAudio);
+            }
+            window.addEventListener('click', unlockAudio, { passive: true });
+            window.addEventListener('touchstart', unlockAudio, { passive: true });
+        })();
+
+        // Background video snippets: play random short clips at 2x speed (max 6s each)
+        (function() {
+            const clips = [
+                'https://cdn.discordapp.com/attachments/1456055978029092884/1461075516718059703/trim.A9960BD1-36B6-4940-AF15-FC68B5FCC56F.mov?ex=69693c1c&is=6967ea9c&hm=d91a84bd4441545b9a9030faa2caaddeff09b6d14d6b3008e007e875f38cac67&',
+                'https://cdn.discordapp.com/attachments/1456055978029092884/1461075514914508934/EMPATHCHAN_THE_RUTHLESS_DICTATOR_-_YO_YO_NIGGAS_IN_5_HOURS_EBT_ENDS_wukQCa.mov?ex=69693c1c&is=6967ea9c&hm=53dd4c4fed8f7ead335f1fd68f643dbfcd4762e554572cb4ba143d59ebbe5ef2&'
+            ];
+
+            const video = document.getElementById('bg-video');
+            if (!video) return;
+            video.muted = true;
+            video.playbackRate = 2.0;
+            video.preload = 'auto';
+
+            let playTimeout = null;
+            let nextTimeout = null;
+
+            function clearTimers() {
+                if (playTimeout) { clearTimeout(playTimeout); playTimeout = null; }
+                if (nextTimeout) { clearTimeout(nextTimeout); nextTimeout = null; }
+            }
+
+            function playRandomSnippet() {
+                clearTimers();
+                const idx = Math.floor(Math.random() * clips.length);
+                const src = clips[idx];
+                // set source and load
+                video.src = src;
+                video.load();
+
+                const handleMeta = function() {
+                    // duration may be NaN for streaming or unsupported types; guard
+                    const dur = isFinite(video.duration) ? video.duration : 0;
+                    // pick random start; if duration unknown, start at 0
+                    const start = dur > 0 ? Math.random() * Math.max(0, dur - 0.1) : 0;
+                    try { video.currentTime = start; } catch (e) {}
+                };
+
+                const handleSeeked = function() {
+                    video.playbackRate = 2.0;
+                    // attempt to play muted (browsers allow muted autoplay)
+                    video.play().catch(() => {});
+
+                    // compute wall-time max: do not play for more than 6000ms
+                    // also do not exceed remaining duration (if known) divided by playbackRate
+                    const remainingSec = isFinite(video.duration) ? Math.max(0, video.duration - video.currentTime) : 0;
+                    const remainingWallMs = remainingSec > 0 ? (remainingSec / video.playbackRate) * 1000 : 6000;
+                    // choose random play time between 800ms and min(6000, remainingWallMs)
+                    const maxPlay = Math.min(6000, Math.max(800, remainingWallMs));
+                    const playMs = Math.max(500, Math.random() * (maxPlay - 500) + 500);
+
+                    playTimeout = setTimeout(() => {
+                        try { video.pause(); } catch (e) {}
+                        // short gap before next snippet
+                        const gap = 150 + Math.random() * 850;
+                        nextTimeout = setTimeout(playRandomSnippet, gap);
+                    }, playMs);
+                };
+
+                const handleError = function() {
+                    // try next clip shortly if this fails
+                    nextTimeout = setTimeout(playRandomSnippet, 500 + Math.random() * 1000);
+                };
+
+                video.removeEventListener('loadedmetadata', handleMeta);
+                video.removeEventListener('seeked', handleSeeked);
+                video.removeEventListener('error', handleError);
+
+                video.addEventListener('loadedmetadata', handleMeta, { once: true });
+                video.addEventListener('seeked', handleSeeked, { once: true });
+                video.addEventListener('error', handleError, { once: true });
+            }
+
+            // Start muted autoplay; browsers typically allow muted playback
+            playRandomSnippet();
+
+            // Optional: if user interacts, ensure video still muted/unmuted policy
+            function unlock() {
+                try { video.muted = true; video.play(); } catch (e) {}
+                window.removeEventListener('click', unlock);
+                window.removeEventListener('touchstart', unlock);
+            }
+            window.addEventListener('click', unlock, { passive: true });
+            window.addEventListener('touchstart', unlock, { passive: true });
+        })();
 
         // Swap sections on wheel/touch without scrolling the page
         (function() {
