@@ -5,16 +5,16 @@
     <title>tris.rocks</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Font Awesome for icons -->
+    <!-- Font Awesome icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <style>
         body {
             margin: 0;
             height: 100vh;
+            overflow: hidden;
             background: #0b0b0b;
             font-family: Arial, Helvetica, sans-serif;
-            color: white;
 
             display: flex;
             flex-direction: column;
@@ -22,15 +22,36 @@
             justify-content: center;
         }
 
-        /* TYPING TEXT */
+        /* TEXT CONTAINER */
         h1 {
             font-size: 3.5rem;
-            margin-bottom: 35px;
+            margin-bottom: 40px;
             letter-spacing: 2px;
-            border-right: 3px solid #7600f4;
-            padding-right: 10px;
+            position: relative;
             white-space: nowrap;
-            overflow: hidden;
+        }
+
+        .tris { color: #7600f4; }
+        .rocks { color: white; }
+
+        /* CURSOR / CARET */
+        .bar {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: #7600f4;
+            margin-left: 0;
+            vertical-align: text-bottom;
+            opacity: 1;
+        }
+
+        @keyframes blink {
+            0%, 49.999% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .bar.blink {
+            animation: blink 2s steps(2, start) infinite;
         }
 
         /* MAIN BUTTON */
@@ -49,12 +70,26 @@
             transform: scale(1.03);
         }
 
-        /* BOTTOM ICONS */
+        /* ICON LINKS */
         .bottom-buttons {
-            position: absolute;
-            bottom: 25px;
             display: flex;
             gap: 35px;
+            align-items: center;
+        }
+
+        /* Fixed footer container for social icons */
+        .fixed-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            padding: 18px 20px;
+            box-sizing: border-box;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.0);
+            z-index: 1000;
         }
 
         .icon-button {
@@ -69,43 +104,121 @@
             transform: scale(1.15);
         }
 
-        a {
-            text-decoration: none;
+        a { text-decoration: none; }
+
+        /* Sections for scroll transitions */
+        .section {
+            position: fixed;
+            inset: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
+            background: transparent;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        .section:not(.visible) {
+            z-index: 1;
+        }
+
+        .image-container {
+            width: min(1100px, 90%);
+            height: 60vh;
+            background-image: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FUIwQdCyvfNI%2Fmaxresdefault.jpg&f=1&nofb=1&ipt=31de7e471224f14a762b3b79c14da9d90b0005b161cc25f7ecb1e23e9d26bc28');
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            margin-bottom: 28px;
+        }
+
+        .content-header {
+            color: white;
+            font-size: 2.2rem;
+            margin: 8px 0;
+        }
+
+        .content-subtext {
+            color: #bfbfbf;
+            max-width: 900px;
+            text-align: center;
+            line-height: 1.6;
+            font-size: 1.05rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- TYPING TEXT -->
-    <h1 id="typeText"></h1>
+    <!-- SCROLL SECTIONS -->
+    <div class="section hero visible" id="hero">
+        <!-- TYPING TEXT -->
+        <h1 id="typeText">
+            <span id="text"></span><span class="bar"></span>
+        </h1>
 
-    <!-- MAIN BUTTON -->
-    <button class="main-button" onclick="redirectMain()">
-        Continue
-    </button>
+        <!-- MAIN BUTTON -->
+        <button class="main-button" onclick="redirectMain()">
+            Continue
+        </button>
 
-    <!-- BOTTOM ICON LINKS -->
-    <div class="bottom-buttons">
-        <a href="https://discord.gg/YOUR_INVITE" target="_blank" class="icon-button">
-            <i class="fa-brands fa-discord"></i>
-        </a>
+        <!-- ICON LINKS removed from hero (moved to fixed footer) -->
+    </div>
 
-        <a href="https://youtube.com/YOUR_CHANNEL" target="_blank" class="icon-button">
-            <i class="fa-brands fa-youtube"></i>
-        </a>
+    <div class="section content" id="content">
+        <div class="image-container" aria-hidden="true"></div>
+        <h2 class="content-header">Our origins</h2>
+        <p class="content-subtext">shi ion know free durk free kayflock free tayk</p>
+    </div>
+
+    <div class="fixed-footer" aria-hidden="false">
+        <div class="bottom-buttons">
+            <a href="https://discord.gg/QwDRmQGXhZ" target="_blank" class="icon-button" aria-label="Discord">
+                <i class="fa-brands fa-discord"></i>
+            </a>
+            <a href="https://youtube.com/YOUR_CHANNEL" target="_blank" class="icon-button" aria-label="YouTube">
+                <i class="fa-brands fa-youtube"></i>
+            </a>
+        </div>
     </div>
 
     <script>
-        /* TYPING ANIMATION */
         const text = "tris.rocks";
         const speed = 120;
-        let index = 0;
+
+        const container = document.getElementById("typeText");
+        const output = document.getElementById("text");
+
+        let i = 0;
 
         function type() {
-            if (index < text.length) {
-                document.getElementById("typeText").textContent += text.charAt(index);
-                index++;
+            if (i < text.length) {
+                const c = text[i];
+
+                if (i < 4) {
+                    output.innerHTML += `<span class="tris">${c}</span>`;
+                } else {
+                    output.innerHTML += `<span class="rocks">${c}</span>`;
+                }
+
+                i++;
                 setTimeout(type, speed);
+            } else {
+                const bar = document.querySelector('.bar');
+                if (bar) bar.classList.add('blink');
             }
         }
 
@@ -114,6 +227,59 @@
         function redirectMain() {
             window.location.href = "https://example.com";
         }
+
+        // Swap sections on wheel/touch without scrolling the page
+        (function() {
+            const sections = Array.from(document.querySelectorAll('.section'));
+            let current = 0;
+
+            function show(idx) {
+                current = Math.max(0, Math.min(idx, sections.length - 1));
+                sections.forEach((s, i) => {
+                    if (i === current) {
+                        s.classList.add('visible');
+                    } else {
+                        s.classList.remove('visible');
+                    }
+                });
+            }
+
+            show(0);
+
+            let locked = false;
+            function go(delta) {
+                if (locked) return;
+                if (delta > 0 && current < sections.length - 1) {
+                    show(current + 1);
+                    locked = true;
+                    setTimeout(() => locked = false, 700);
+                } else if (delta < 0 && current > 0) {
+                    show(current - 1);
+                    locked = true;
+                    setTimeout(() => locked = false, 700);
+                }
+            }
+
+            window.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                go(e.deltaY);
+            }, { passive: false });
+
+            // Touch support (swipe)
+            let ts = 0;
+            window.addEventListener('touchstart', (e) => { ts = e.touches[0].clientY; }, { passive: true });
+            window.addEventListener('touchend', (e) => {
+                const te = e.changedTouches[0].clientY;
+                const diff = ts - te;
+                if (Math.abs(diff) > 40) go(diff);
+            }, { passive: true });
+
+            // Keyboard arrows
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') { e.preventDefault(); go(1); }
+                if (e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
+            }, { passive: false });
+        })();
     </script>
 
 </body>
