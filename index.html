@@ -366,7 +366,7 @@
             const statusEl = document.getElementById('lua-status');
             const isLua = detectLuaVM();
             statusEl.innerText = isLua ? 'LuaVM Detected' : 'No LuaVM Detected';
-            if (isLua && window.rconsoleprint) {
+            if (isLua && typeof print === 'function') {
                 print("hello");
             }
         })();
