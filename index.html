@@ -179,17 +179,15 @@
 
         /* Mobile adjustments */
         @media (max-width: 700px) {
-            /* On small screens keep everything centered, smaller, and disable scroll */
-            body { overflow: hidden; height: 100vh; }
+            /* On small screens allow normal scrolling and make sections flow */
+            body { overflow: auto; height: auto; touch-action: pan-y; }
             .section {
-                position: fixed;
-                inset: 0;
-                height: 100vh;
+                position: relative;
+                inset: auto;
+                height: auto;
                 padding: 20px 12px calc(20px + var(--footer-height));
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
+                display: block;
+                box-sizing: border-box;
             }
             h1 { font-size: 1.6rem; margin-bottom: 18px; letter-spacing: 1px; }
             .image-container { height: 30vh; width: 92%; border-radius: 8px; }
@@ -199,7 +197,7 @@
             .fixed-footer { padding: 10px 12px; --footer-height: 60px; }
             :root { --footer-height: 60px; }
             /* Make sure background video stays behind content on mobile */
-            #bg-video { opacity: 0.45; }
+            #bg-video { opacity: 0.45; pointer-events: none; }
         }
     </style>
 </head>
