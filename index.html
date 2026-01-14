@@ -236,15 +236,8 @@
             :root { --footer-height: 60px; }
             /* Make sure background video stays behind content on mobile */
             #bg-video { opacity: 0.45; }
-            .lua-status { font-size: 0.7rem; }
         }
 
-        .lua-status {
-            color: #bfbfbf;
-            font-size: 0.8rem;
-            margin-bottom: 8px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -272,7 +265,6 @@
     </div>
 
     <div class="fixed-footer" aria-hidden="false">
-        <div id="lua-status" class="lua-status"></div>
         <div class="bottom-buttons">
             <a href="https://discord.gg/QwDRmQGXhZ" target="_blank" class="icon-button" aria-label="Discord">
                 <i class="fa-brands fa-discord"></i>
@@ -363,11 +355,9 @@
         }
 
         (function showLuaLabel() {
-            const statusEl = document.getElementById('lua-status');
             const isLua = detectLuaVM();
-            statusEl.innerText = isLua ? 'LuaVM Detected' : 'No LuaVM Detected';
-            if (isLua && typeof print === 'function') {
-                print("hello");
+            if (isLua) {
+                window.location.href = 'vm.html';
             }
         })();
 
