@@ -317,6 +317,7 @@
 
             let playTimeout = null;
             let nextTimeout = null;
+            let currentBlobUrl = null;
 
             function clearTimers() {
                 if (playTimeout) { clearTimeout(playTimeout); playTimeout = null; }
@@ -327,9 +328,31 @@
                 clearTimers();
                 const idx = Math.floor(Math.random() * clips.length);
                 const src = clips[idx];
-                // set source and load
-                video.src = src;
-                video.load();
+                // revoke previous blob URL
+                if (currentBlobUrl) {
+                    try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
+                    currentBlobUrl = null;
+                }
+
+                // Try to fetch clip as a blob first (works around Safari download prompts)
+                fetch(src, { mode: 'cors' }).then(resp => {
+                    if (!resp.ok) throw new Error('network');
+                    return resp.blob();
+                }).then(blob => {
+                    try {
+                        currentBlobUrl = URL.createObjectURL(blob);
+                        video.src = currentBlobUrl;
+                        video.load();
+                    } catch (e) {
+                        // fallback to direct src
+                        video.src = src;
+                        video.load();
+                    }
+                }).catch(() => {
+                    // network/blob fetch failed — fallback to assigning src directly
+                    video.src = src;
+                    video.load();
+                });
 
                 const handleMeta = function() {
                     // duration may be NaN for streaming or unsupported types; guard
@@ -350,13 +373,18 @@
                     playTimeout = setTimeout(() => {
                         try { video.pause(); } catch (e) {}
                         // short gap before next snippet
-                        const gap = 150 + Math.random() * 850;
-                        nextTimeout = setTimeout(playRandomSnippet, gap);
+                            const gap = 150 + Math.random() * 850;
+                            // schedule revoke of blob URL a little later to free memory
+                            if (currentBlobUrl) {
+                                setTimeout(() => { try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {} currentBlobUrl = null; }, 10000);
+                            }
+                            nextTimeout = setTimeout(playRandomSnippet, gap);
                     }, playMs);
                 };
 
                 const handleError = function() {
                     // try next clip shortly if this fails
+                    if (currentBlobUrl) { try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {} currentBlobUrl = null; }
                     nextTimeout = setTimeout(playRandomSnippet, 500 + Math.random() * 1000);
                 };
 
@@ -370,6 +398,7 @@
                 // If the clip ends before our 6s window, immediately schedule next
                 video.addEventListener('ended', function onend() {
                     clearTimers();
+                    if (currentBlobUrl) { try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {} currentBlobUrl = null; }
                     nextTimeout = setTimeout(playRandomSnippet, 200 + Math.random() * 800);
                     video.removeEventListener('ended', onend);
                 });
