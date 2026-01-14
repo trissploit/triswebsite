@@ -1,4 +1,16 @@
 [
-  { "name": "Jujutsu Shenanigans", "updated": true },
-  { "name": "MM2", "updated": false },
+  {
+    "slug": "mm2",
+    "name": "Murder Mystery 2",
+    "icon": "https://via.placeholder.com/256x256.png?text=MM2",
+    "updated": false,
+    "link": "https://www.example.com/mm2"
+  },
+  {
+    "slug": "jujutsu-shenanigans",
+    "name": "Jujutsu Shenanigans",
+    "icon": "https://tr.rbxcdn.com/180DAY-717484006e83a24085a9cdbc1a5db322/768/432/Image/Webp/noFilter",
+    "updated": true,
+    "link": "https://www.example.com/jjs"
+  }
 ]
