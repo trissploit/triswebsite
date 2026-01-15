@@ -7,6 +7,8 @@
 
     <!-- Font Awesome icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- JetBrains Mono font -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root { --footer-height: 72px; }
@@ -15,7 +17,8 @@
             height: 100vh;
             overflow: hidden;
             background: #0b0b0b;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+            text-transform: lowercase;
 
             display: flex;
             flex-direction: column;
@@ -85,7 +88,7 @@
         .code-holder pre {
             margin: 0;
             color: #e6e6e6;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
             font-size: 0.95rem;
             white-space: pre-wrap;
             word-break: break-all;
@@ -214,6 +217,85 @@
             font-size: 1.05rem;
         }
 
+        /* Supported games list */
+        .games-section {
+            margin-top: 22px;
+            width: min(1100px, 95%);
+            /* remove outer outline (we'll use purple outline on cards instead) */
+            border: none;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            overflow: visible;
+        }
+        .games-header { color: #fff; font-size: 1.2rem; margin-bottom: 6px; }
+        /* Center the games and allow wrapping so they sit in the middle based on count */
+        .games-list { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+
+        /* Thumbnail-style game cards */
+        .game-card {
+            width: 320px;
+            /* allow height to size to content so caption sits below the image */
+            height: auto;
+            /* remove rounding */
+            border-radius: 0;
+            position: relative;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+            /* use the purple outline color for cards */
+            border: 1px solid #7600f4;
+            flex: 0 0 auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Image area (no fade). Use contain so whole icon is visible; ensure it's big enough */
+        .game-image {
+            /* original gamebox image area size */
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            background-color: #000;
+            flex: none;
+        }
+        /* Box below the image containing name and status - size to content */
+        .game-caption {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #111111;
+        }
+        .game-caption .card-name { color: #fff; }
+        .card-name { color: #fff; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.6); flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-status {
+            /* use an image only for status; remove box/colour styles */
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: transparent;
+            white-space: nowrap;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-status img { display: block; width: 24px; height: 24px; }
+        .card-status.updated { /* semantic class kept for aria/title only */ }
+        .card-status.outdated { /* semantic class kept for aria/title only */ }
+
+        @media (max-width: 700px) {
+            .games-list { gap: 12px; }
+            .game-card { width: 240px; height: auto; border-radius: 0; }
+            .game-image { height: 140px; }
+            .game-caption { padding: 6px 10px; }
+            .card-name { font-size: 0.95rem; }
+            .card-status { padding: 4px 8px; font-size: 0.85rem; }
+        }
+        .games-actions { display:flex; gap:8px; margin-top:8px; justify-content:flex-end; }
+
         /* Mobile adjustments */
         @media (max-width: 700px) {
             /* On small screens keep everything centered, smaller, and disable scroll */
@@ -262,6 +344,13 @@
         <div class="image-container" aria-hidden="true"></div>
         <h2 class="content-header">Our origins</h2>
         <p class="content-subtext">shi ion know free durk free kayflock free tayk</p>
+    </div>
+
+    <div class="section" id="games">
+        <h2 class="content-header">Supported Games</h2>
+        <div class="games-section" id="games-section" aria-live="polite">
+            <div class="games-list" id="games-list" role="list" aria-label="Supported games">Loading...</div>
+        </div>
     </div>
 
     <div class="fixed-footer" aria-hidden="false">
@@ -340,6 +429,86 @@
             btn.innerText = 'Copied!';
             setTimeout(() => { btn.innerText = orig; }, 1400);
         }
+
+        // Supported games list - use local games.json for metadata and rendering
+        (function() {
+            const container = document.getElementById('games-list');
+
+            async function render() {
+                if (!container) return;
+                container.innerHTML = '';
+
+                try {
+                    const resp = await fetch('https://raw.githubusercontent.com/trissploit/trisrocks.github.io/refs/heads/main/games.json', { cache: 'no-cache' });
+                    if (!resp.ok) throw new Error('Failed to load games.json');
+                    const games = await resp.json();
+
+                    if (!Array.isArray(games) || games.length === 0) {
+                        container.textContent = 'No games available.';
+                        return;
+                    }
+
+                    for (const g of games) {
+                        const name = g.name || 'Unknown Game';
+                        const icon = g.icon || '';
+                        const updated = Boolean(g.updated);
+                        const link = g.link || '#';
+
+                        const card = document.createElement('a');
+                        card.className = 'game-card';
+                        card.href = link;
+                        card.target = '_blank';
+                        card.rel = 'noopener noreferrer';
+
+                        // create image container
+                        const imageDiv = document.createElement('div');
+                        imageDiv.className = 'game-image';
+                        if (icon) {
+                            imageDiv.style.backgroundImage = `url('${icon.replace(/'/g, "\\'")}')`;
+                        } else {
+                            imageDiv.style.background = 'linear-gradient(180deg, #111 0%, #0b0b0b 100%)';
+                            const placeholder = document.createElement('div');
+                            placeholder.style.position = 'absolute';
+                            placeholder.style.left = '50%';
+                            placeholder.style.top = '50%';
+                            placeholder.style.transform = 'translate(-50%, -50%)';
+                            placeholder.style.opacity = '0.9';
+                            placeholder.style.color = '#7600f4';
+                            placeholder.style.fontSize = '40px';
+                            placeholder.style.pointerEvents = 'none';
+                            placeholder.innerHTML = '<i class="fa-solid fa-gamepad"></i>';
+                            imageDiv.appendChild(placeholder);
+                        }
+
+                        // caption box below image
+                        const caption = document.createElement('div'); caption.className = 'game-caption';
+                        const label = document.createElement('div'); label.className = 'card-name'; label.textContent = name;
+                        const status = document.createElement('div');
+                        status.className = 'card-status ' + (updated ? 'updated' : 'outdated');
+                        status.setAttribute('aria-label', updated ? 'Updated' : 'Outdated');
+                        status.title = updated ? 'Updated' : 'Outdated';
+                        const updatedSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM3NjAwZjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNpcmNsZS1jaGVjay1pY29uIGx1Y2lkZS1jaXJjbGUtY2hlY2siPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBhdGggZD0ibTkgMTIgMiAyIDQtNCIvPjwvc3ZnPg==';
+                        const outdatedSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZjAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNpcmNsZS14LWljb24gbHVjaWRlLWNpcmNsZS14Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwYXRoIGQ9Im0xNSA5LTYgNiIvPjxwYXRoIGQ9Im05IDkgNiA2Ii8+PC9zdmc+';
+                        const img = document.createElement('img');
+                        img.alt = updated ? 'Updated' : 'Outdated';
+                        img.src = updated ? updatedSvg : outdatedSvg;
+                        status.appendChild(img);
+
+                        caption.appendChild(label);
+                        caption.appendChild(status);
+
+                        card.appendChild(imageDiv);
+                        card.appendChild(caption);
+                        container.appendChild(card);
+                    }
+                } catch (e) {
+                    container.textContent = 'Failed to load games.';
+                    console.error('Error loading games.json', e);
+                }
+            }
+
+            render();
+        })();
 
         // Background audio shuffling multiple MP3s
         (function() {
